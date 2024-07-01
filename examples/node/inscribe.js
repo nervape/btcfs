@@ -1,5 +1,6 @@
 import { JsonRpcDatasource } from "@sadoprotocol/ordit-sdk";
 import { Inscriber, Ordit } from "@sadoprotocol/ordit-sdk"
+import fs from 'fs';
 
 const MNEMONIC = "<mnemonic>"
 const network = "testnet"
@@ -14,6 +15,8 @@ async function main() {
 
   wallet.setDefaultAddress('taproot')
 
+  const imageData = fs.readFileSync("your image path")
+
   // new inscription tx
   const transaction = new Inscriber({
     network,
@@ -21,20 +24,10 @@ async function main() {
     publicKey: wallet.publicKey,
     changeAddress: wallet.selectedAddress,
     destination: wallet.selectedAddress,
-    mediaContent: 'Hello World',
-    mediaType: "text/plain",
+    mediaContent: imageData,
+    mediaType: "image/png", // MIME types
     feeRate: 3,
-    meta: { // Flexible object: Record<string, any>
-      title: "Example title",
-      desc: "Lorem ipsum",
-      slug: "cool-digital-artifact",
-      creator: {
-        name: "Your Name",
-        email: "artist@example.org",
-        address: wallet.selectedAddress
-      }
-    },
-    postage: 1500 // base value of the inscription in sats
+    postage: 546 // base value of the inscription in sats
   })
 
   // generate deposit address and fee for inscription
