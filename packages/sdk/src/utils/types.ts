@@ -25,10 +25,10 @@ export type OneOfAllDataFormats = RequireAtLeastOne<BaseDataFormat>
 export type BufferOrHex = RequireAtLeastOne<Pick<BaseDataFormat, "buffer" | "hex">>
 
 export interface IsBitcoinPaymentResponse {
-  type: AddressTypes
+  type: AddressTypes | string
   payload: false | payments.Payment
 }
 
 export interface GetScriptTypeResponse extends IsBitcoinPaymentResponse {
-  format: AddressFormats
+  format: AddressFormats | string
 }

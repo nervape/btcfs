@@ -14,8 +14,6 @@ export function buildWitnessScript({ recover = false, ...options }: WitnessScrip
     return bitcoin.script.compile([Buffer.from(options.xkey, "hex"), bitcoin.opcodes.OP_CHECKSIG])
   }
 
-  const contentChunks = chunkContent(options.mediaContent, !options.mediaType.includes("text") ? "base64" : "utf8")
-  const contentStackElements = contentChunks.map(opPush)
   const metaStackElements: (number | Buffer)[] = []
 
   if (typeof options.meta === "object") {
@@ -23,7 +21,7 @@ export function buildWitnessScript({ recover = false, ...options }: WitnessScrip
       ...[
         bitcoin.opcodes.OP_FALSE,
         bitcoin.opcodes.OP_IF,
-        opPush("ord"),
+        opPush("DOB"),
         1,
         1,
         opPush("application/json;charset=utf-8"),
@@ -39,24 +37,56 @@ export function buildWitnessScript({ recover = false, ...options }: WitnessScrip
     metaChunks && metaStackElements.push(bitcoin.opcodes.OP_ENDIF)
   }
 
-  const baseStackElements = [
-    Buffer.from(options.xkey, "hex"),
-    bitcoin.opcodes.OP_CHECKSIG,
-    bitcoin.opcodes.OP_FALSE,
-    bitcoin.opcodes.OP_IF,
-    opPush("ord"),
-    1,
-    1,
-    opPush(options.mediaType),
-    bitcoin.opcodes.OP_0
-  ]
+  if(Array.isArray(options.mediaContent)) {
+    const header = [
+      Buffer.from(options.xkey, "hex"),
+      bitcoin.opcodes.OP_CHECKSIG,
+    ]
+    let baseStackElements = []
 
-  return bitcoin.script.compile([
-    ...baseStackElements,
-    ...contentStackElements,
-    bitcoin.opcodes.OP_ENDIF,
-    ...metaStackElements
-  ])
+    const multiContents = options.mediaContent.map((content, index: number) => {
+      const contentChunks = chunkContent(content, !options.mediaType[index].includes("text") ? "base64" : "utf8")
+      const contentStackElements = contentChunks.map(opPush)
+      return [
+        bitcoin.opcodes.OP_FALSE,
+        bitcoin.opcodes.OP_IF,
+        opPush("DOB"),
+        1,
+        1,
+        opPush(options.mediaType[index]),
+        bitcoin.opcodes.OP_0,
+        ...contentStackElements,
+        bitcoin.opcodes.OP_ENDIF
+      ]
+    })
+
+    return bitcoin.script.compile([
+      ...header,
+      ...multiContents.flat()
+    ])
+    
+  } else {
+    const contentChunks = chunkContent(options.mediaContent, !options.mediaType.includes("text") ? "base64" : "utf8")
+    const contentStackElements = contentChunks.map(opPush)
+    const baseStackElements = [
+      Buffer.from(options.xkey, "hex"),
+      bitcoin.opcodes.OP_CHECKSIG,
+      bitcoin.opcodes.OP_FALSE,
+      bitcoin.opcodes.OP_IF,
+      opPush("DOB"),
+      1,
+      1,
+      opPush(options.mediaType as string),
+      bitcoin.opcodes.OP_0
+    ]
+
+    return bitcoin.script.compile([
+      ...baseStackElements,
+      ...contentStackElements,
+      bitcoin.opcodes.OP_ENDIF,
+      ...metaStackElements
+    ])
+  }
 }
 
 function opPush(data: string | Buffer) {
@@ -67,8 +97,9 @@ function opPush(data: string | Buffer) {
   return Buffer.concat([buff])
 }
 
-export const chunkContent = function (str: string, encoding: BufferEncoding = "utf8") {
-  const contentBuffer = Buffer.from(str, encoding)
+export const chunkContent = function (str: string | Buffer, encoding: BufferEncoding = "utf8") {
+  const contentBuffer = Buffer.isBuffer(Buffer) ? (str as Buffer) : Buffer.from(str as string, encoding)
+  
   const chunks: Buffer[] = []
   let chunkedBytes = 0
 
@@ -83,8 +114,8 @@ export const chunkContent = function (str: string, encoding: BufferEncoding = "u
 
 export type WitnessScriptOptions = {
   xkey: string
-  mediaContent: string
-  mediaType: string
+  mediaContent: string | string[]
+  mediaType: string | string[]
   meta: any
   recover?: boolean
 }

@@ -6,6 +6,8 @@ import { MAXIMUM_FEE } from "../constants"
 import { OrditSDKError } from "../utils/errors"
 import { FeeEstimatorOptions } from "./types"
 
+type ScriptOrAddressFromats = AddressFormats | string
+
 export default class FeeEstimator {
   protected fee = 0
   protected feeRate: number
@@ -50,8 +52,8 @@ export default class FeeEstimator {
   private analyzePSBTComponents() {
     const inputs = this.psbt.data.inputs
     const outputs = this.psbt.txOutputs
-    const inputTypes: AddressFormats[] = []
-    const outputTypes: AddressFormats[] = []
+    const inputTypes: ScriptOrAddressFromats[] = []
+    const outputTypes: ScriptOrAddressFromats[] = []
 
     if (inputs.length === 0) {
       throw new OrditSDKError("PSBT must have at least one input")
@@ -127,7 +129,7 @@ export default class FeeEstimator {
     return this.virtualSize
   }
 
-  private getBaseSizeByType(type: AddressFormats) {
+  private getBaseSizeByType(type: AddressFormats | string) {
     switch (type) {
       case "taproot":
         return { input: 42, output: 43, txHeader: 10.5, witness: 66 } // witness size is different for non-default sigHash
@@ -141,6 +143,9 @@ export default class FeeEstimator {
       case "legacy":
         return { input: 148, output: 34, txHeader: 10, witness: 0 }
 
+      case "embed": 
+        return { input: 0, output: 92 /*max*/, txHeader: 0, witness: 0 }
+        
       default:
         throw new OrditSDKError("Invalid type")
     }

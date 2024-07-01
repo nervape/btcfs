@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-extra-semi */
-import { networks, Psbt, Transaction } from "bitcoinjs-lib"
+import { networks, Psbt, Transaction, payments } from "bitcoinjs-lib"
 import reverseBuffer from "buffer-reverse"
 
 import {
@@ -217,6 +217,18 @@ export class PSBTBuilder extends FeeEstimator {
     }
   }
 
+  private dataToOpReturnScriptPubkey(data: Buffer | string): Buffer {
+    if (typeof data === 'string') {
+      if(data.startsWith('0x')) {
+        data = Buffer.from(data.slice(2))
+      } else {
+        data = Buffer.from(data, 'hex');  
+      }
+    }
+    const payment = payments.embed({ data: [data] });
+    return payment.output!;
+  }
+
   private addOutputs() {
     const reservedIndexes = this.injectableOutputs.map((o) => o.injectionIndex)
     const injectedIndexes: number[] = []
@@ -228,10 +240,17 @@ export class PSBTBuilder extends FeeEstimator {
         injectedIndexes.push(injectable.injectionIndex)
       }
 
-      this.psbt.addOutput({
-        address: output.address,
-        value: output.value
-      })
+      if('data' in output) {
+        this.psbt.addOutput({
+          script: this.dataToOpReturnScriptPubkey(output.data!),
+          value: output.value
+        })
+      } else {
+        this.psbt.addOutput({
+          address: output.address!,
+          value: output.value
+        })
+      }
     })
 
     this.injectableOutputs.forEach((injectable) => {
@@ -284,7 +303,7 @@ export class PSBTBuilder extends FeeEstimator {
 
   private async retrieveUTXOs(address?: string, amount?: number) {
     if (!this.autoAdjustment && !address) return
-
+      
     const amountToRequest =
       amount && amount > 0
         ? amount
@@ -303,6 +322,7 @@ export class PSBTBuilder extends FeeEstimator {
     this.noMoreUTXOS = utxos.length === 0
 
     this.utxos.push(...utxos)
+    
   }
 
   protected async retrieveSelectedUTXOs(address: string, amount: number) {

@@ -1,6 +1,6 @@
 // amount lower than this is considered as dust value
 // and majority of the miners don't pick txs w/ the following output value or lower
-export const MINIMUM_AMOUNT_IN_SATS = 600
+export const MINIMUM_AMOUNT_IN_SATS = 546
 
 // Fee calculated by the fee estimator cannot be greater than 5 BTC in any case
 export const MAXIMUM_FEE = 500_000_000

@@ -17,13 +17,13 @@ import { MINIMUM_AMOUNT_IN_SATS } from "../constants"
 import { OrditSDKError } from "../utils/errors"
 import { NestedObject } from "../utils/types"
 import { PSBTBuilder } from "./PSBTBuilder"
-import { SkipStrictSatsCheckOptions, UTXOLimited } from "./types"
+import { SkipStrictSatsCheckOptions, Output, UTXOLimited } from "./types"
 
 bitcoin.initEccLib(ecc)
 
 export class Inscriber extends PSBTBuilder {
-  protected mediaType: string
-  protected mediaContent: string
+  protected mediaType: string | string[]
+  protected mediaContent: string  | string[]
   protected meta?: NestedObject
   protected postage: number
 
@@ -73,6 +73,7 @@ export class Inscriber extends PSBTBuilder {
     if (!publicKey || !changeAddress || !mediaContent) {
       throw new OrditSDKError("Invalid options provided")
     }
+
 
     this.destinationAddress = destinationAddress
     this.mediaType = mediaType
@@ -129,7 +130,7 @@ export class Inscriber extends PSBTBuilder {
         {
           address: this.destinationAddress || this.address,
           value: this.postage
-        }
+        } as Output
       ].concat(this.outputs)
     }
 
@@ -169,6 +170,8 @@ export class Inscriber extends PSBTBuilder {
         recover: true
       })
     }
+
+    // console.log("this.witnessScripts=", this.witnessScripts.inscription?.toString('hex'))
   }
 
   buildTaprootTree() {
@@ -232,6 +235,7 @@ export class Inscriber extends PSBTBuilder {
       scriptTree: this.taprootTree,
       redeem: this.getInscriptionRedeemScript()
     })
+
     this.witness = this.payment.witness
 
     await this.calculateNetworkFeeUsingPreviewMode()
@@ -264,11 +268,11 @@ export class Inscriber extends PSBTBuilder {
 
   async isReady({ skipStrictSatsCheck, customAmount }: SkipStrictSatsCheckOptions = {}) {
     this.isBuilt()
-
     if (!this.ready) {
       try {
         await this.fetchAndSelectSuitableUnspent({ skipStrictSatsCheck, customAmount })
       } catch (error) {
+        console.log("error=", error)
         return false
       }
     }
@@ -311,13 +315,13 @@ export type InscriberArgOptions = Pick<GetWalletOptions, "safeMode"> & {
   publicKey: string
   feeRate: number
   postage: number
-  mediaType: string
-  mediaContent: string
+  mediaType: string | string[]
+  mediaContent: string | string[]
   changeAddress: string
   meta?: NestedObject
-  outputs?: Outputs
+  outputs?: Output[]
   encodeMetadata?: boolean
   datasource?: BaseDatasource
 }
 
-type Outputs = Array<{ address: string; value: number }>
+// type Outputs = Array<{ address: string; value: number }>

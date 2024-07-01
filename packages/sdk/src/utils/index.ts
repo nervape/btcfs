@@ -204,6 +204,15 @@ export const isP2TR = (script: Buffer, network: Network): IsBitcoinPaymentRespon
     payload: p2tr
   }
 }
+
+export const isEmbed = (script: Buffer, network: Network): IsBitcoinPaymentResponse => {
+  const embed = isPaymentFactory(bitcoin.payments.embed, network)(script)
+  return {
+    type: "embed",
+    payload: embed
+  }
+}
+
 export function getScriptType(script: Buffer, network: Network): GetScriptTypeResponse {
   const p2pkh = isP2PKH(script, network)
   if (p2pkh.payload) {
@@ -234,6 +243,14 @@ export function getScriptType(script: Buffer, network: Network): GetScriptTypeRe
     return {
       format: addressTypeToName["p2tr"],
       ...p2tr
+    }
+  }
+
+  const embed = isEmbed(script, network)
+  if (embed.payload) {
+    return {
+      format: 'embed',
+      ...embed 
     }
   }
 

@@ -123,6 +123,7 @@ export class Ordit {
     if (this.selectedAddressType === type) return
 
     const result = this.getAddressByType(type) as Account[]
+
     const addressToSelect = result[index]
 
     if (!addressToSelect)
@@ -163,6 +164,8 @@ export class Ordit {
       psbt = bitcoin.Psbt.fromBase64(value)
     }
 
+
+
     if (!psbt || !psbt.inputCount) {
       throw new OrditSDKError("Invalid PSBT provided.")
     }
@@ -170,6 +173,7 @@ export class Ordit {
     const inputsToSign: Input[] = []
 
     psbt.data.inputs.forEach((v, index) => {
+
       let script: any = null
 
       if (v.witnessUtxo) {
@@ -183,7 +187,6 @@ export class Ordit {
       const isSigned = v.finalScriptSig || v.finalScriptWitness
       if (script && !isSigned) {
         const address = bitcoin.address.fromOutputScript(script, networkObj)
-
         // TODO: improvise the below logic by accepting indexes to sign
         if (isRevealTx || (!isRevealTx && this.selectedAddress === address)) {
           inputsToSign.push({
@@ -203,6 +206,7 @@ export class Ordit {
 
     for (let i = 0; i < inputsToSign.length; i++) {
       const input = psbt.data.inputs[inputsToSign[i].index]
+
       psbtHasBeenSigned = input.finalScriptSig || input.finalScriptWitness ? true : false
 
       if (psbtHasBeenSigned) continue
