@@ -6,13 +6,7 @@
   "type": "module",
   "scripts": {
     "inscribe": "node inscribe",
-    "read": "node read",
-    "send": "node send",
-    "create-psbt": "node create-psbt",
-    "instant-buy": "node instant-buy",
-    "publish-collection": "node collections",
-    "build-psbt": "node build-psbt",
-    "split-utxo": "node split-utxo"
+    "batch-inscribe": "node inscribe-multi-files"
   },
   "author": "",
   "license": "ISC",

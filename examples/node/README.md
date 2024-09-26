@@ -1,21 +1,10 @@
-# Example on how metadata can be inscribed with OIP-01
+# Examples of inscribing DOB data on Bitcoin network
 
-## Background
+## How to inscribe
+> *Dot not change the feeRate when you funded the reveal address*.
 
-## How to run
+- Run with `npm run inscribe` or `npm run batch-inscribe` to generate reveal address and fees(sats). 
 
-1. `npm i`
+- Fund the reveal address with the fees, and wait for the funding transaction to be confirmed.
 
-2. To inscribe:
-
-   - Open `inscribe.js` and edit accordingly.
-   - Run with `npm run inscribe`.
-
-3. To query a specific inscription for metadata:
-
-   - Open `read.js` and edit accordingly.
-   - Run with `npm run read`.
-
-4. To send cardinals (safe spendables, e.g. satas that do not have inscriptions and are not rare ordinals):
-   - Open `send.js` and edit accordingly.
-   - Run with `npm run send`.
+- Run `npm run inscribe` or `npm run batch-inscribe` again to send reveal transaction, when the transaction is confirmed, the inscribing is complete.
